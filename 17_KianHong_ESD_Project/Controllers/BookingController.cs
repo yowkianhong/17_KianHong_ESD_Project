@@ -1,5 +1,6 @@
 ﻿using _17_KianHong_ESD_Project.Data;
 using _17_KianHong_ESD_Project.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace _17_KianHong_ESD_Project.Controllers
 {
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BookingController : ControllerBase
@@ -16,6 +18,7 @@ namespace _17_KianHong_ESD_Project.Controllers
         {
             _context = context;
         }
+       // [Authorize(Roles = "user")]
         [HttpGet]
         public IActionResult GetAllBookings()
         {
@@ -61,6 +64,15 @@ namespace _17_KianHong_ESD_Project.Controllers
             _context.SaveChanges();
 
             return Ok(existingBooking);
+        }
+        [HttpGet("byDate")]
+        public IActionResult GetBookingsByDate(DateTime bookingDate)
+        {
+            var bookings = _context.Bookings
+                .Where(b => b.BookingDateFrom.Date <= bookingDate.Date && b.BookingDateTo.Date >= bookingDate.Date)
+                .ToList();
+
+            return Ok(bookings);
         }
         // DELETE api/<BookingController>/5
         [HttpDelete("{bookingId}")]
