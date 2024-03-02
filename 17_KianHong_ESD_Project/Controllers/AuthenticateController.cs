@@ -11,7 +11,7 @@ using _17_KianHong_ESD_Project.Model;
 
 namespace _17_KianHong_ESD_Project.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/")]
     [ApiController]
     public class AuthenticateController : ControllerBase
     {
@@ -113,11 +113,11 @@ namespace _17_KianHong_ESD_Project.Controllers
                  //new Response { Status = "Error", Message = "User creation Failed Please check user details and try again" });
                  return StatusCode(StatusCodes.Status500InternalServerError,
     new Response { Status = "Error", Message = "User creation Failed. Errors: " + string.Join(", ", result.Errors.Select(e => e.Description)) });
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-            if (await _roleManager.RoleExistsAsync(UserRoles.Admin))
+            if (!await _roleManager.RoleExistsAsync(UserRoles.User))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.User));
+            if (await _roleManager.RoleExistsAsync(UserRoles.User))
             {
-                await _userManager.AddToRoleAsync(user, UserRoles.Admin);
+                await _userManager.AddToRoleAsync(user, UserRoles.User);
             }
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
@@ -139,7 +139,7 @@ namespace _17_KianHong_ESD_Project.Controllers
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError,
-                 new Response { Status = "Error", Message = "User creation Failed Please check user details and try again" });
+                 new Response { Status = "Error", Message = "User creation Failed. Errors: " + string.Join(", ", result.Errors.Select(e => e.Description)) });
             if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
             if (await _roleManager.RoleExistsAsync(UserRoles.Admin))

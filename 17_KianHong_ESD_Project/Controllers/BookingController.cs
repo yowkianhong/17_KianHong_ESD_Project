@@ -8,63 +8,77 @@ using Microsoft.EntityFrameworkCore;
 
 namespace _17_KianHong_ESD_Project.Controllers
 {
-    //[Authorize]
+   // [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class BookingController : ControllerBase
+    public class BookingsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        public BookingController(ApplicationDbContext context)
+
+        public BookingsController(ApplicationDbContext context)
         {
             _context = context;
         }
-       // [Authorize(Roles = "user")]
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpGet]
-        public IActionResult GetAllBookings()
+        public IActionResult GetAll()
         {
-            var bookings = _context.Bookings.ToList();
-            return Ok(bookings);
+            return Ok(_context.Bookings);
         }
-        // GET: api/<BookingController>
-        [HttpGet("{bookingId}")]
-        public IActionResult GetBookingById(int bookingId)
-        {
-            var booking = _context.Bookings.FirstOrDefault(b => b.BookingID == bookingId);
-
+        [Authorize(Roles = UserRoles.User)]
+        //[Authorize(Roles = UserRoles.Admin)]
+        [HttpGet("{id}")]
+        public IActionResult GetById(int? id) 
+        { 
+            var booking = _context.Bookings.FirstOrDefault(e => e.BookingID == id);
             if (booking == null)
-                return NotFound();
+                return Problem(detail:"Member with id " + " is not found.", statusCode:404);
 
             return Ok(booking);
+            
         }
-
-        // POST api/<BookingController>
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpPost]
-        public IActionResult CreateBooking([FromBody] BookingInfo newBooking)
+        public IActionResult Post(BookingInfo booking)
         {
-            _context.Bookings.Add(newBooking);
+            _context.Bookings.Add(booking);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetBookingById), new { bookingId = newBooking.BookingID }, newBooking);
+            return CreatedAtAction("GetAll", new {id = booking.BookingID}, booking);
         }
-
-        [HttpPut("{bookingId}")]
-        public IActionResult UpdateBooking(int bookingId, [FromBody] BookingInfo updatedBooking)
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpPut]
+        public IActionResult Put(int? id, BookingInfo booking)
         {
-            var existingBooking = _context.Bookings.FirstOrDefault(b => b.BookingID == bookingId);
+            var entity = _context.Bookings.FirstOrDefault(e => e.BookingID== id);
+            if (entity == null)
+                return Problem(detail: "Member with id " + id + "is not found .", statusCode: 404);
 
-            if (existingBooking == null)
-                return NotFound();
-
-            existingBooking.Description = updatedBooking.Description;
-            existingBooking.BookingDateFrom = updatedBooking.BookingDateFrom;
-            existingBooking.BookingDateTo = updatedBooking.BookingDateTo;
-            existingBooking.BookingBy = updatedBooking.BookingBy;
-            existingBooking.BookingStatus = updatedBooking.BookingStatus;
+            entity.Description = booking.Description;
+            entity.BookingDateFrom = booking.BookingDateFrom;
+            entity.BookingDateTo = booking.BookingDateTo;
+            entity.BookingBy = booking.BookingBy;
+            entity.BookingStatus = booking.BookingStatus;
 
             _context.SaveChanges();
 
-            return Ok(existingBooking);
+            return Ok(entity);
         }
+        [Authorize(Roles = UserRoles.Admin)]
+        [HttpDelete]
+        public IActionResult Delete(int? id, BookingInfo booking)
+        {
+            var entity = _context.Bookings.FirstOrDefault(e => e.BookingID == id);
+            if (entity == null)
+                return Problem(detail: "Member with id " + id + "is not found .", statusCode: 404);
+
+
+            _context.Bookings.Remove(entity);
+            _context.SaveChanges();
+
+            return Ok(entity);
+        }
+        [Authorize(Roles = UserRoles.Admin)]
         [HttpGet("byDate")]
         public IActionResult GetBookingsByDate(DateTime bookingDate)
         {
@@ -73,20 +87,6 @@ namespace _17_KianHong_ESD_Project.Controllers
                 .ToList();
 
             return Ok(bookings);
-        }
-        // DELETE api/<BookingController>/5
-        [HttpDelete("{bookingId}")]
-        public IActionResult DeleteBooking(int bookingId)
-        {
-            var bookingToDelete = _context.Bookings.FirstOrDefault(b => b.BookingID == bookingId);
-
-            if (bookingToDelete == null)
-                return NotFound();
-
-            _context.Bookings.Remove(bookingToDelete);
-            _context.SaveChanges();
-
-            return NoContent();
         }
     }
 }
